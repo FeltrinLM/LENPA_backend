@@ -24,33 +24,27 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        // 1. Pega o token da requisição
         var tokenJWT = recuperarToken(request);
 
-        // 2. Se tiver um token, a gente valida
         if (tokenJWT != null) {
-            var subject = tokenService.getSubject(tokenJWT); // Retorna o email se estiver tudo certo
-
-            // 3. Busca o usuário no banco pelo email
+            var subject = tokenService.getSubject(tokenJWT);
             var usuario = repository.findByEmail(subject).orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            // 4. Cria o objeto de autenticação e força o login dele no contexto do Spring
             var authentication = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
-        // 5. Manda a requisição seguir o fluxo dela (seja pro Controller ou pro bloqueio)
         filterChain.doFilter(request, response);
     }
 
     private String recuperarToken(HttpServletRequest request) {
         var authorizationHeader = request.getHeader("Authorization");
 
-        // O padrão da web é enviar o token com a palavra "Bearer " antes, então a gente remove ela pra ler só o código
-        if (authorizationHeader != null) {
-            return authorizationHeader.replace("Bearer ", "");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return null;
         }
 
-        return null;
+        // Retorna apenas a parte do código do token (pula os 7 caracteres de "Bearer ")
+        return authorizationHeader.substring(7);
     }
 }

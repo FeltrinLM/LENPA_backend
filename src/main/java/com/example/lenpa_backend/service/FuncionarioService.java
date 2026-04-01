@@ -1,7 +1,9 @@
 package com.example.lenpa_backend.service;
 
+import com.example.lenpa_backend.dto.AtualizarPerfilDTO;
 import com.example.lenpa_backend.dto.FuncionarioRequestDTO;
 import com.example.lenpa_backend.dto.FuncionarioResponseDTO;
+import com.example.lenpa_backend.dto.TrocarSenhaDTO;
 import com.example.lenpa_backend.mapper.FuncionarioMapper;
 import com.example.lenpa_backend.model.Funcionario;
 import com.example.lenpa_backend.repository.FuncionarioRepository;
@@ -65,5 +67,34 @@ public class FuncionarioService {
             throw new RuntimeException("Funcionário não encontrado.");
         }
         repository.deleteById(id);
+    }
+    // No FuncionarioService.java
+
+    public FuncionarioResponseDTO atualizarPerfil(String emailLogado, AtualizarPerfilDTO dto) {
+        Funcionario funcionario = repository.findByEmail(emailLogado)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+        // Valida se o novo email já existe em OUTRA conta
+        if (!funcionario.getEmail().equals(dto.email()) && repository.findByEmail(dto.email()).isPresent()) {
+            throw new RuntimeException("Este e-mail já está em uso.");
+        }
+
+        funcionario.setNome(dto.nome());
+        funcionario.setEmail(dto.email());
+
+        return mapper.toResponseDTO(repository.save(funcionario));
+    }
+
+    public void alterarSenha(String emailLogado, TrocarSenhaDTO dto) {
+        Funcionario funcionario = repository.findByEmail(emailLogado)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+        // O matches do PasswordEncoder é essencial aqui!
+        if (!passwordEncoder.matches(dto.senhaAtual(), funcionario.getSenha())) {
+            throw new RuntimeException("Senha atual incorreta.");
+        }
+
+        funcionario.setSenha(passwordEncoder.encode(dto.novaSenha()));
+        repository.save(funcionario);
     }
 }

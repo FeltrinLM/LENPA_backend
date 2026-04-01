@@ -1,7 +1,9 @@
 package com.example.lenpa_backend.controller;
 
+import com.example.lenpa_backend.dto.AtualizarPerfilDTO;
 import com.example.lenpa_backend.dto.FuncionarioRequestDTO;
 import com.example.lenpa_backend.dto.FuncionarioResponseDTO;
+import com.example.lenpa_backend.dto.TrocarSenhaDTO;
 import com.example.lenpa_backend.service.FuncionarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,24 @@ public class FuncionarioController {
     @Autowired
     private FuncionarioService service;
 
-    // CREATE (Criar conta) - Exclusivo ADMIN
+    // --- ROTAS DE AUTOGESTÃO (VEM PRIMEIRO) ---
+
+    @PutMapping("/meu-perfil")
+    public ResponseEntity<FuncionarioResponseDTO> atualizarPerfil(@RequestBody @Valid AtualizarPerfilDTO dto) {
+        var emailLogado = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        var response = service.atualizarPerfil(emailLogado, dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/minha-senha")
+    public ResponseEntity<Void> trocarSenha(@RequestBody @Valid TrocarSenhaDTO dto) {
+        var emailLogado = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        service.alterarSenha(emailLogado, dto);
+        return ResponseEntity.noContent().build();
+    }
+
+    // --- ROTAS ADMINISTRATIVAS (VEM DEPOIS) ---
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FuncionarioResponseDTO> cadastrar(@RequestBody @Valid FuncionarioRequestDTO dto) {
@@ -25,7 +44,6 @@ public class FuncionarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // UPDATE (Editar conta) - Exclusivo ADMIN
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FuncionarioResponseDTO> atualizar(@PathVariable Long id, @RequestBody @Valid FuncionarioRequestDTO dto) {
@@ -33,7 +51,6 @@ public class FuncionarioController {
         return ResponseEntity.ok(response);
     }
 
-    // DELETE (Excluir conta) - Exclusivo ADMIN
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
