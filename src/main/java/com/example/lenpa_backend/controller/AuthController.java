@@ -8,8 +8,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import com.example.lenpa_backend.security.TokenService;
-import com.example.lenpa_backend.dto.DadosAutenticacao;
-import com.example.lenpa_backend.dto.DadosTokenJWT;
+import com.example.lenpa_backend.dto.funcionario.DadosAutenticacao;
+import com.example.lenpa_backend.dto.funcionario.DadosTokenJWT;
 
 @RestController
 @RequestMapping("/auth")

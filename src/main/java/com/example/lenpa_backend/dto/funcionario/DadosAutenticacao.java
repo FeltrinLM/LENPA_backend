@@ -1,4 +1,4 @@
-package com.example.lenpa_backend.dto;
+package com.example.lenpa_backend.dto.funcionario;
 
 import jakarta.validation.constraints.NotBlank;
 

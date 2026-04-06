@@ -1,7 +1,7 @@
 package com.example.lenpa_backend.mapper;
 
-import com.example.lenpa_backend.dto.FuncionarioRequestDTO;
-import com.example.lenpa_backend.dto.FuncionarioResponseDTO;
+import com.example.lenpa_backend.dto.funcionario.FuncionarioRequestDTO;
+import com.example.lenpa_backend.dto.funcionario.FuncionarioResponseDTO;
 import com.example.lenpa_backend.model.Funcionario;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

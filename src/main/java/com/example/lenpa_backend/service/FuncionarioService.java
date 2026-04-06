@@ -1,9 +1,9 @@
 package com.example.lenpa_backend.service;
 
-import com.example.lenpa_backend.dto.AtualizarPerfilDTO;
-import com.example.lenpa_backend.dto.FuncionarioRequestDTO;
-import com.example.lenpa_backend.dto.FuncionarioResponseDTO;
-import com.example.lenpa_backend.dto.TrocarSenhaDTO;
+import com.example.lenpa_backend.dto.funcionario.AtualizarPerfilDTO;
+import com.example.lenpa_backend.dto.funcionario.FuncionarioRequestDTO;
+import com.example.lenpa_backend.dto.funcionario.FuncionarioResponseDTO;
+import com.example.lenpa_backend.dto.funcionario.TrocarSenhaDTO;
 import com.example.lenpa_backend.mapper.FuncionarioMapper;
 import com.example.lenpa_backend.model.Funcionario;
 import com.example.lenpa_backend.repository.FuncionarioRepository;

@@ -1,9 +1,9 @@
 package com.example.lenpa_backend.controller;
 
-import com.example.lenpa_backend.dto.AtualizarPerfilDTO;
-import com.example.lenpa_backend.dto.FuncionarioRequestDTO;
-import com.example.lenpa_backend.dto.FuncionarioResponseDTO;
-import com.example.lenpa_backend.dto.TrocarSenhaDTO;
+import com.example.lenpa_backend.dto.funcionario.AtualizarPerfilDTO;
+import com.example.lenpa_backend.dto.funcionario.FuncionarioRequestDTO;
+import com.example.lenpa_backend.dto.funcionario.FuncionarioResponseDTO;
+import com.example.lenpa_backend.dto.funcionario.TrocarSenhaDTO;
 import com.example.lenpa_backend.service.FuncionarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

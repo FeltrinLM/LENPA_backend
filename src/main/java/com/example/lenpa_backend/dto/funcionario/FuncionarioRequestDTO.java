@@ -1,4 +1,4 @@
-package com.example.lenpa_backend.dto;
+package com.example.lenpa_backend.dto.funcionario;
 
 import com.example.lenpa_backend.model.NivelPermissao;
 import jakarta.validation.constraints.Email;

@@ -1,4 +1,4 @@
-package com.example.lenpa_backend.dto;
+package com.example.lenpa_backend.dto.visitante;
 
 import com.example.lenpa_backend.model.TipoVisitante;
 import jakarta.validation.constraints.NotBlank;
