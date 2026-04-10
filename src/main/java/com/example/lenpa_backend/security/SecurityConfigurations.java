@@ -36,6 +36,7 @@ public class SecurityConfigurations {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll() // Essencial para o Angular conseguir carregar a imagem depois!
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Libera o "pré-teste" do navegador
                         .anyRequest().authenticated()
                 )
@@ -48,7 +49,9 @@ public class SecurityConfigurations {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+
+        // A MÁGICA ESTÁ AQUI: Aceitar qualquer header evita bloqueios de MultipartFile
+        configuration.setAllowedHeaders(Arrays.asList("*"));
 
         // Importante para o navegador ler a resposta de sucesso
         configuration.setAllowCredentials(true);

@@ -11,6 +11,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 @Service
 public class AtividadeService {
@@ -73,5 +79,29 @@ public class AtividadeService {
         if (dados.tipo() != null) atividade.setTipo(dados.tipo());
 
         return mapper.toDetalhamentoDTO(atividade);
+    }
+
+    public String salvarImagem(MultipartFile arquivo) {
+        try {
+            // A MÁGICA ESTÁ AQUI: .toAbsolutePath().normalize()
+            Path diretorioUpload = Paths.get("uploads").toAbsolutePath().normalize();
+
+            if (!Files.exists(diretorioUpload)) {
+                Files.createDirectories(diretorioUpload);
+            }
+
+            // Gera um nome único para evitar que fotos com o mesmo nome se apaguem
+            String nomeArquivo = UUID.randomUUID().toString() + "_" + arquivo.getOriginalFilename();
+            Path caminhoArquivo = diretorioUpload.resolve(nomeArquivo);
+
+            // Agora o transferTo vai salvar no lugar exato, sem se perder na pasta Temp do Windows
+            arquivo.transferTo(caminhoArquivo.toFile());
+
+            // Retorna a URL que o Angular vai usar para carregar a imagem na tela
+            return "http://localhost:8080/uploads/" + nomeArquivo;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao salvar a imagem", e);
+        }
     }
 }
