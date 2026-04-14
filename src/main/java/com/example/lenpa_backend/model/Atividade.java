@@ -4,7 +4,6 @@ import com.example.lenpa_backend.dto.atividade.DadosCadastroAtividade;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Table(name = "atividades")
 @Entity(name = "Atividade")
@@ -23,7 +22,7 @@ public class Atividade {
     private String nome;
     private Integer vagas;
     private LocalDate data;
-    private LocalTime horario;
+    private String horario;
     private String descricao;
     private String imagem;
 

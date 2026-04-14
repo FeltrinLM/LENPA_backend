@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.FutureOrPresent;
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 public record DadosCadastroAtividade(
         @NotBlank
@@ -19,7 +18,7 @@ public record DadosCadastroAtividade(
         LocalDate data,
 
         @NotNull
-        LocalTime horario,
+        String horario,
 
         String descricao,
 

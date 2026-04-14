@@ -38,21 +38,21 @@ public class FuncionarioController {
     // --- ROTAS ADMINISTRATIVAS (VEM DEPOIS) ---
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // <-- ARRUMADO AQUI
     public ResponseEntity<FuncionarioResponseDTO> cadastrar(@RequestBody @Valid FuncionarioRequestDTO dto) {
         FuncionarioResponseDTO response = service.cadastrarFuncionario(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // <-- ARRUMADO AQUI
     public ResponseEntity<FuncionarioResponseDTO> atualizar(@PathVariable Long id, @RequestBody @Valid FuncionarioRequestDTO dto) {
         FuncionarioResponseDTO response = service.atualizarFuncionario(id, dto);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // <-- ARRUMADO AQUI
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
         service.excluirFuncionario(id);
         return ResponseEntity.noContent().build();

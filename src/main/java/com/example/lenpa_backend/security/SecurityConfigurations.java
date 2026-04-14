@@ -35,9 +35,10 @@ public class SecurityConfigurations {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Libera o preflight do CORS
+                        .requestMatchers("/error").permitAll() // <-- A MÁGICA AQUI: Vai revelar o ERRO REAL em vez de 403!
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll() // Essencial para o Angular conseguir carregar a imagem depois!
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Libera o "pré-teste" do navegador
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
@@ -49,11 +50,7 @@ public class SecurityConfigurations {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // A MÁGICA ESTÁ AQUI: Aceitar qualquer header evita bloqueios de MultipartFile
         configuration.setAllowedHeaders(Arrays.asList("*"));
-
-        // Importante para o navegador ler a resposta de sucesso
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

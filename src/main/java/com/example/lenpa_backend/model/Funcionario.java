@@ -16,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "funcionario")
-public class Funcionario implements UserDetails { // <-- A MÁGICA COMEÇA AQUI
+public class Funcionario implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,15 +37,15 @@ public class Funcionario implements UserDetails { // <-- A MÁGICA COMEÇA AQUI
 
     // --- MÉTODOS OBRIGATÓRIOS DO USERDETAILS ABAIXO ---
 
-    // Define as permissões (roles) do usuário
+    // Define as permissões (roles) do usuário de forma exata, sem "ROLE_"
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.nivelPermissao == NivelPermissao.ADMINISTRADOR) {
             // Se for admin, tem permissão de ADMIN e também as básicas de BOLSISTA
-            return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_BOLSISTA"));
+            return List.of(new SimpleGrantedAuthority("ADMINISTRADOR"), new SimpleGrantedAuthority("BOLSISTA"));
         } else {
             // Se for bolsista, tem só permissão de BOLSISTA
-            return List.of(new SimpleGrantedAuthority("ROLE_BOLSISTA"));
+            return List.of(new SimpleGrantedAuthority("BOLSISTA"));
         }
     }
 
@@ -61,8 +61,6 @@ public class Funcionario implements UserDetails { // <-- A MÁGICA COMEÇA AQUI
         return email;
     }
 
-    // Os métodos abaixo são verificações de conta (bloqueada, expirada, etc).
-    // Como não temos isso na regra de negócio agora, deixamos tudo retornando 'true' (ativo).
     @Override
     public boolean isAccountNonExpired() {
         return true;

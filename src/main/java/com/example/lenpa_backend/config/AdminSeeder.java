@@ -35,11 +35,6 @@ public class AdminSeeder implements CommandLineRunner {
 
             repository.save(admin);
 
-            System.out.println("==================================================");
-            System.out.println("✅ USUÁRIO ADMIN TEMPORÁRIO CRIADO COM SUCESSO!");
-            System.out.println("E-mail: " + emailAdmin);
-            System.out.println("Senha:  123456");
-            System.out.println("==================================================");
         }
     }
 }

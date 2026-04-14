@@ -3,14 +3,13 @@ package com.example.lenpa_backend.dto.atividade;
 import com.example.lenpa_backend.model.Atividade;
 import com.example.lenpa_backend.model.TipoAtividade;
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 public record DadosDetalhamentoAtividade(
         Long idAtividade,
         String nome,
         Integer vagas,
         LocalDate data,
-        LocalTime horario,
+        String horario,
         String descricao,
         String imagem,
         TipoAtividade tipo
