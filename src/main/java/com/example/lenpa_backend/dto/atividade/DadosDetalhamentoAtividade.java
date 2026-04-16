@@ -10,11 +10,11 @@ public record DadosDetalhamentoAtividade(
         Integer vagas,
         LocalDate data,
         String horario,
+        String local, // NOVO CAMPO
         String descricao,
         String imagem,
         TipoAtividade tipo
 ) {
-    // Construtor que converte a Entidade diretamente para o DTO
     public DadosDetalhamentoAtividade(Atividade atividade) {
         this(
                 atividade.getIdAtividade(),
@@ -22,6 +22,7 @@ public record DadosDetalhamentoAtividade(
                 atividade.getVagas(),
                 atividade.getData(),
                 atividade.getHorario(),
+                atividade.getLocal(), // MAPEAMENTO DO NOVO CAMPO
                 atividade.getDescricao(),
                 atividade.getImagem(),
                 atividade.getTipo()

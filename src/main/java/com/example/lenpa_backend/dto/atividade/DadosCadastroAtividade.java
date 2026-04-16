@@ -20,6 +20,9 @@ public record DadosCadastroAtividade(
         @NotNull
         String horario,
 
+        @NotBlank // Garante que não venha vazio
+        String local,
+
         String descricao,
 
         String imagem,

@@ -26,9 +26,6 @@ public class AtividadeController {
     @Autowired
     private AtividadeService service;
 
-    /**
-     * CADASTRO (Apenas ADMIN)
-     */
     @PostMapping
     @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     public ResponseEntity cadastrar(@RequestBody @Valid DadosCadastroAtividade dados, UriComponentsBuilder uriBuilder) {
@@ -37,10 +34,6 @@ public class AtividadeController {
         return ResponseEntity.created(uri).body(dto);
     }
 
-    /**
-     * UPLOAD DE IMAGEM (Apenas ADMIN)
-     * Removido o 'consumes = MediaType.MULTIPART_FORM_DATA_VALUE' para não conflitar com o Angular
-     */
     @PostMapping("/upload")
     @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     public ResponseEntity<Map<String, String>> uploadImagem(@RequestParam("arquivo") MultipartFile arquivo) {
@@ -48,27 +41,18 @@ public class AtividadeController {
         return ResponseEntity.ok(Map.of("url", urlImagem));
     }
 
-    /**
-     * LISTAGEM (Pública/Bolsistas)
-     */
     @GetMapping
     public ResponseEntity<Page<DadosDetalhamentoAtividade>> listar(@PageableDefault(size = 10, sort = {"data"}) Pageable paginacao) {
         var pagina = service.listar(paginacao);
         return ResponseEntity.ok(pagina);
     }
 
-    /**
-     * DETALHAMENTO
-     */
     @GetMapping("/{id}")
     public ResponseEntity detalhar(@PathVariable Long id) {
         var dto = service.buscarPorId(id);
         return ResponseEntity.ok(dto);
     }
 
-    /**
-     * EXCLUSÃO LÓGICA (Apenas ADMIN)
-     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     public ResponseEntity excluir(@PathVariable Long id) {
@@ -76,9 +60,6 @@ public class AtividadeController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * ATUALIZAÇÃO (Apenas ADMIN)
-     */
     @PutMapping
     @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     @Transactional

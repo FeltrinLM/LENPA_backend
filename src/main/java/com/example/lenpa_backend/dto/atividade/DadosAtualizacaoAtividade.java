@@ -11,6 +11,7 @@ public record DadosAtualizacaoAtividade(
         Integer vagas,
         LocalDate data,
         String horario,
+        String local, // NOVO CAMPO
         String descricao,
         String imagem,
         TipoAtividade tipo

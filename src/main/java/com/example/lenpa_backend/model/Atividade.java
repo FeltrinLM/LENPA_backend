@@ -16,35 +16,34 @@ public class Atividade {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_atividade") // Batendo com Id_atividade do ER
+    @Column(name = "id_atividade")
     private Long idAtividade;
 
     private String nome;
     private Integer vagas;
     private LocalDate data;
     private String horario;
+    private String local; // NOVO CAMPO ADICIONADO AQUI
     private String descricao;
     private String imagem;
 
     @Enumerated(EnumType.STRING)
     private TipoAtividade tipo;
 
-    // Campo essencial para o Admin "excluir" sem apagar do banco (preserva relatórios)
     private Boolean ativo;
 
-    // Construtor para facilitar a criação via Service
     public Atividade(DadosCadastroAtividade dados) {
-        this.ativo = true; // Toda atividade nasce ativa
+        this.ativo = true;
         this.nome = dados.nome();
         this.vagas = dados.vagas();
         this.data = dados.data();
         this.horario = dados.horario();
+        this.local = dados.local(); // MAPEAMENTO DO NOVO CAMPO
         this.descricao = dados.descricao();
         this.imagem = dados.imagem();
         this.tipo = dados.tipo();
     }
 
-    // Método para o Admin "excluir"
     public void excluir() {
         this.ativo = false;
     }
