@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class FuncionarioService {
 
@@ -96,5 +98,12 @@ public class FuncionarioService {
 
         funcionario.setSenha(passwordEncoder.encode(dto.novaSenha()));
         repository.save(funcionario);
+    }
+    // LISTAR TODOS
+    public List<FuncionarioResponseDTO> listarTodos() {
+        return repository.findAll()
+                .stream()
+                .map(mapper::toResponseDTO)
+                .toList(); // Se estiver usando Java 16+, toList() funciona direto. Senão, use Collectors.toList()
     }
 }

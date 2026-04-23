@@ -55,4 +55,13 @@ public class VisitanteController {
         var dto = service.atualizar(dados);
         return ResponseEntity.ok(dto);
     }
+    /**
+     * EXCLUIR: Remove o visitante permanentemente do sistema.
+     */
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        service.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/funcionarios")
 public class FuncionarioController {
@@ -36,23 +38,29 @@ public class FuncionarioController {
     }
 
     // --- ROTAS ADMINISTRATIVAS (VEM DEPOIS) ---
+    @GetMapping
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')") // Lembre-se de usar a String exata do seu Enum que arrumamos antes
+    public ResponseEntity<List<FuncionarioResponseDTO>> listar() {
+        List<FuncionarioResponseDTO> lista = service.listarTodos();
+        return ResponseEntity.ok(lista);
+    }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // <-- ARRUMADO AQUI
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')") // <-- ARRUMADO AQUI
     public ResponseEntity<FuncionarioResponseDTO> cadastrar(@RequestBody @Valid FuncionarioRequestDTO dto) {
         FuncionarioResponseDTO response = service.cadastrarFuncionario(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // <-- ARRUMADO AQUI
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')") // <-- ARRUMADO AQUI
     public ResponseEntity<FuncionarioResponseDTO> atualizar(@PathVariable Long id, @RequestBody @Valid FuncionarioRequestDTO dto) {
         FuncionarioResponseDTO response = service.atualizarFuncionario(id, dto);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // <-- ARRUMADO AQUI
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')") // <-- ARRUMADO AQUI
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
         service.excluirFuncionario(id);
         return ResponseEntity.noContent().build();

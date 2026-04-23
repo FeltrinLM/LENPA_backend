@@ -61,4 +61,11 @@ public class VisitanteService {
         // O Spring salva automaticamente ao final do método por causa do @Transactional
         return mapper.toDetalhamentoDTO(visitante);
     }
+    @Transactional
+    public void excluir(Long id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Visitante não encontrado!");
+        }
+        repository.deleteById(id);
+    }
 }
