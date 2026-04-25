@@ -36,9 +36,13 @@ public class SecurityConfigurations {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Libera o preflight do CORS
-                        .requestMatchers("/error").permitAll() // <-- A MÁGICA AQUI: Vai revelar o ERRO REAL em vez de 403!
+                        .requestMatchers("/error").permitAll() // Revela o erro real
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                        // --- A MÁGICA DO "2 EM 1" ACONTECE AQUI ---
+                        .requestMatchers(HttpMethod.GET, "/atividades").permitAll()     // Libera a listagem na página inicial
+                        .requestMatchers(HttpMethod.GET, "/atividades/**").permitAll()  // Libera os detalhes de uma atividade específica
+                        // ------------------------------------------
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
