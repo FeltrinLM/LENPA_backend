@@ -27,13 +27,25 @@ public class SecurityFilter extends OncePerRequestFilter {
         var tokenJWT = recuperarToken(request);
 
         if (tokenJWT != null) {
-            var subject = tokenService.getSubject(tokenJWT);
-            var usuario = repository.findByEmail(subject).orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            try {
+                // Tenta validar o token e autenticar o usuário
+                var subject = tokenService.getSubject(tokenJWT);
+                var usuario = repository.findByEmail(subject).orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            var authentication = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                var authentication = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            } catch (RuntimeException e) {
+                // 🔥 O PULO DO GATO 🔥
+                // Se o token estiver vencido ou inválido, o erro cai aqui.
+                // Não deixamos o servidor dar Erro 500. Apenas logamos e o usuário segue "não autenticado".
+                System.err.println("Aviso no SecurityFilter: Token rejeitado (" + e.getMessage() + "). Seguindo como visitante anônimo.");
+            }
         }
 
+        // Segue o baile!
+        // - Se a rota é pública (/agendamentos), funciona.
+        // - Se a rota é protegida e o token caiu no catch ali em cima, o Spring devolve um 403 Forbidden limpo.
         filterChain.doFilter(request, response);
     }
 

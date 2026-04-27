@@ -7,7 +7,7 @@ import lombok.*;
 @Table(name = "visitantes")
 @Entity(name = "Visitante")
 @Getter
-@Setter // Gera o setNome, setCidade e setTipo
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
@@ -18,15 +18,24 @@ public class Visitante {
     private Long id;
 
     private String nome;
-    private String cidade; // <-- AQUI: mudei de 'city' para 'cidade' para bater com o Service
+    private String cidade;
+    private String email; // Continua aqui, e o banco aceitará nulo sem problemas
 
     @Enumerated(EnumType.STRING)
     private TipoVisitante tipo;
 
-    // Construtor para o DTO de cadastro (Ajustado para 'cidade')
+    // Construtor legado (caso você ainda use o DadosCadastroVisitante em algum lugar)
     public Visitante(DadosCadastroVisitante dados) {
         this.nome = dados.nome();
         this.cidade = dados.cidade();
         this.tipo = dados.tipo();
+    }
+
+    // NOVO: Construtor prático para o AgendarService usar na hora do "Auto-Agendamento"
+    public Visitante(String nome, String cidade, String email, TipoVisitante tipo) {
+        this.nome = nome;
+        this.cidade = cidade;
+        this.email = email;
+        this.tipo = tipo;
     }
 }

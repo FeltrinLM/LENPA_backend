@@ -42,7 +42,12 @@ public class SecurityConfigurations {
                         // --- A MÁGICA DO "2 EM 1" ACONTECE AQUI ---
                         .requestMatchers(HttpMethod.GET, "/atividades").permitAll()     // Libera a listagem na página inicial
                         .requestMatchers(HttpMethod.GET, "/atividades/**").permitAll()  // Libera os detalhes de uma atividade específica
+
+                        // 🔥 NOVAS ROTAS PÚBLICAS DO SELF-SERVICE 🔥
+                        .requestMatchers(HttpMethod.POST, "/agendamentos").permitAll() // Visitante agenda sozinho
+                        .requestMatchers(HttpMethod.GET, "/visitantes/buscar-email").permitAll() // Autocompletar do site
                         // ------------------------------------------
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)

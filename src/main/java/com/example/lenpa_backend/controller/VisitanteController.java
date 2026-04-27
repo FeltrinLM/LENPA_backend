@@ -12,12 +12,34 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/visitantes")
 public class VisitanteController {
 
     @Autowired
     private VisitanteService service;
+
+    /**
+     * NOVO: Busca de perfil pelo E-mail (Site)
+     * Ex: GET /visitantes/buscar-email?email=joao@email.com
+     */
+    @GetMapping("/buscar-email")
+    public ResponseEntity<DadosDetalhamentoVisitante> buscarPorEmail(@RequestParam String email) {
+        var dto = service.buscarPorEmail(email);
+        return dto != null ? ResponseEntity.ok(dto) : ResponseEntity.notFound().build();
+    }
+
+    /**
+     * NOVO: Busca de perfis pelo Nome (Painel do Funcionário)
+     * Ex: GET /visitantes/buscar-nome?nome=Mar
+     */
+    @GetMapping("/buscar-nome")
+    public ResponseEntity<List<DadosDetalhamentoVisitante>> buscarPorNome(@RequestParam String nome) {
+        var lista = service.buscarPorNome(nome);
+        return ResponseEntity.ok(lista);
+    }
 
     /**
      * CENÁRIO 2: Cadastro manual de visitante para uso futuro.
@@ -30,8 +52,7 @@ public class VisitanteController {
     }
 
     /**
-     * CENÁRIO 1: O funcionário precisa listar os visitantes para
-     * ver se o "Mario" já existe antes de colocá-lo no evento.
+     * CENÁRIO 1: O funcionário precisa listar os visitantes
      */
     @GetMapping
     public ResponseEntity<Page<DadosDetalhamentoVisitante>> listar(@PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao) {
@@ -45,19 +66,13 @@ public class VisitanteController {
         return ResponseEntity.ok(dto);
     }
 
-    /**
-     * EDITAR: Caso o funcionário tenha cadastrado o visitante com erro
-     * durante o agendamento rápido (Cenário 1).
-     */
     @PutMapping
     @Transactional
     public ResponseEntity atualizar(@RequestBody @Valid DadosAtualizacaoVisitante dados) {
         var dto = service.atualizar(dados);
         return ResponseEntity.ok(dto);
     }
-    /**
-     * EXCLUIR: Remove o visitante permanentemente do sistema.
-     */
+
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
