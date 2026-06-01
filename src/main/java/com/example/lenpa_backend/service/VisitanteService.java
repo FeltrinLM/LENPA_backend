@@ -25,7 +25,7 @@ public class VisitanteService {
 
     // NOVO: Busca por E-mail (usado pelo autocompletar do site)
     public DadosDetalhamentoVisitante buscarPorEmail(String email) {
-        return repository.findByEmail(email)
+        return repository.findFirstByEmail(email)
                 .map(mapper::toDetalhamentoDTO) // Reutilizando seu mapper
                 .orElse(null); // Retorna nulo se não achar, para o Controller devolver 404
     }
@@ -50,7 +50,7 @@ public class VisitanteService {
 
     @Transactional
     public Visitante obterOuCadastrar(DadosCadastroVisitante dados) {
-        return repository.findByNomeAndCidade(dados.nome(), dados.cidade())
+        return repository.findFirstByNomeAndCidade(dados.nome(), dados.cidade())
                 .orElseGet(() -> repository.save(mapper.toEntity(dados)));
     }
 

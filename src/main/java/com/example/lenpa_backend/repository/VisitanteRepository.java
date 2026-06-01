@@ -9,11 +9,13 @@ import java.util.Optional;
 public interface VisitanteRepository extends JpaRepository<Visitante, Long> {
 
     boolean existsByNomeAndCidade(String nome, String cidade);
-    Optional<Visitante> findByNomeAndCidade(String nome, String cidade);
 
-    // NOVO: Busca exata pelo e-mail (O Angular chama quando o visitante digita no site)
-    Optional<Visitante> findByEmail(String email);
+    // ATUALIZADO: Traz apenas o primeiro se houver duplicidade de Nome e Cidade
+    Optional<Visitante> findFirstByNomeAndCidade(String nome, String cidade);
 
-    // NOVO: Busca parcial pelo nome (O Angular chama pro autocompletar do funcionário)
+    // ATUALIZADO: Traz apenas o primeiro se houver duplicidade de E-mail
+    Optional<Visitante> findFirstByEmail(String email);
+
+    // MANTIDO: Busca parcial pelo nome (O Angular chama pro autocompletar do funcionário)
     List<Visitante> findByNomeContainingIgnoreCase(String nome);
 }

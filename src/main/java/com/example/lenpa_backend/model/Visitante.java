@@ -19,12 +19,12 @@ public class Visitante {
 
     private String nome;
     private String cidade;
-    private String email; // Continua aqui, e o banco aceitará nulo sem problemas
+    private String email;
 
     @Enumerated(EnumType.STRING)
     private TipoVisitante tipo;
 
-    // Construtor legado (caso você ainda use o DadosCadastroVisitante em algum lugar)
+    // Construtor legado
     public Visitante(DadosCadastroVisitante dados) {
         this.nome = dados.nome();
         this.cidade = dados.cidade();

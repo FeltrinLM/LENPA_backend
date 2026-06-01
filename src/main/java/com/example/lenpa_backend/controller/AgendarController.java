@@ -9,7 +9,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -25,7 +24,7 @@ public class AgendarController {
      * Aqui é onde as validações de vagas e duplicidade acontecem.
      */
     @PostMapping
-    public ResponseEntity agendar(@RequestBody @Valid DadosCadastroAgendamento dados, UriComponentsBuilder uriBuilder) {
+    public ResponseEntity<DadosDetalhamentoAgendamento> agendar(@RequestBody @Valid DadosCadastroAgendamento dados, UriComponentsBuilder uriBuilder) {
         var dto = service.agendar(dados);
         var uri = uriBuilder.path("/agendamentos/{id}").buildAndExpand(dto.idAgendamento()).toUri();
         return ResponseEntity.created(uri).body(dto);
@@ -46,7 +45,7 @@ public class AgendarController {
      * Rota específica para o dia do evento.
      */
     @PutMapping("/{id}/confirmar")
-    public ResponseEntity confirmarPresenca(@PathVariable Long id) {
+    public ResponseEntity<Void> confirmarPresenca(@PathVariable Long id) {
         service.confirmarPresenca(id);
         return ResponseEntity.ok().build();
     }
@@ -56,7 +55,7 @@ public class AgendarController {
      * O registro não some do banco, apenas muda o boolean 'agendamento' para false.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity cancelar(@PathVariable Long id) {
+    public ResponseEntity<Void> cancelar(@PathVariable Long id) {
         service.cancelar(id);
         return ResponseEntity.noContent().build();
     }

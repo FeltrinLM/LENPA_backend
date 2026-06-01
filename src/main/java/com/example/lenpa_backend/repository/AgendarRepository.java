@@ -17,21 +17,28 @@ import java.util.List;
 public interface AgendarRepository extends JpaRepository<Agendar, Long> {
 
     /**
-     * Validação de Duplicidade:
-     * Verifica se já existe um agendamento para este visitante nesta atividade.
+     * NOVA MÁGICA AQUI: Filtra a listagem geral para trazer apenas quem NÃO está cancelado
      */
-    boolean existsByAtividadeIdAtividadeAndVisitanteId(Long idAtividade, Long idVisitante);
+    Page<Agendar> findByAgendamentoTrue(Pageable paginacao);
 
     /**
-     * Lista todos os agendamentos de uma atividade específica.
+     * Validação de Duplicidade:
+     * Verifica se já existe um agendamento ATIVO para este visitante nesta atividade.
+     * (Adicionado 'AndAgendamentoTrue' para permitir que a pessoa remarque caso tenha sido cancelada antes)
      */
-    List<Agendar> findAllByAtividadeIdAtividade(Long idAtividade);
+    boolean existsByAtividadeIdAtividadeAndVisitanteIdAndAgendamentoTrue(Long idAtividade, Long idVisitante);
+
+    /**
+     * Lista todos os agendamentos ATIVOS de uma atividade específica.
+     */
+    List<Agendar> findAllByAtividadeIdAtividadeAndAgendamentoTrue(Long idAtividade);
 
     /**
      * Soma de Vagas Ocupadas:
      * Soma o campo 'quantidade' de todos os agendamentos de uma atividade.
+     * 🔥 CORREÇÃO IMPORTANTE: Agora só soma se 'agendamento = true' (vagas canceladas voltam a ficar livres)
      */
-    @Query("SELECT COALESCE(SUM(a.quantidade), 0) FROM Agendar a WHERE a.atividade.idAtividade = :idAtividade")
+    @Query("SELECT COALESCE(SUM(a.quantidade), 0) FROM Agendar a WHERE a.atividade.idAtividade = :idAtividade AND a.agendamento = true")
     Integer somarQuantidadeReservada(Long idAtividade);
 
     /**
@@ -49,18 +56,17 @@ public interface AgendarRepository extends JpaRepository<Agendar, Long> {
      */
     @Query("SELECT COALESCE(SUM(a.quantidade), 0) FROM Agendar a " +
             "WHERE a.atividade.data BETWEEN :dataInicio AND :dataFim " +
-            "AND a.presenca = true AND a.atividade.ativo = true")
+            "AND a.presenca = true AND a.atividade.ativo = true AND a.agendamento = true")
     Integer totalVisitantesConfirmadosPeriodo(@Param("dataInicio") LocalDate dataInicio, @Param("dataFim") LocalDate dataFim);
 
     /**
      * 2. RANKING DE CIDADES:
      * Agrupa os visitantes confirmados por cidade, soma a quantidade e ordena do maior para o menor.
-     * O 'Pageable' aqui será usado para limitar a consulta ao Top 10.
      */
     @Query("SELECT v.cidade AS localidade, SUM(a.quantidade) AS total " +
             "FROM Agendar a JOIN a.visitante v " +
             "WHERE a.atividade.data BETWEEN :dataInicio AND :dataFim " +
-            "AND a.presenca = true AND a.atividade.ativo = true " +
+            "AND a.presenca = true AND a.atividade.ativo = true AND a.agendamento = true " +
             "GROUP BY v.cidade ORDER BY total DESC")
     List<CidadeRankingProjection> findRankingCidadesPeriodo(@Param("dataInicio") LocalDate dataInicio, @Param("dataFim") LocalDate dataFim, Pageable pageable);
 
@@ -71,7 +77,7 @@ public interface AgendarRepository extends JpaRepository<Agendar, Long> {
     @Query("SELECT at.nome AS nome, at.imagem AS imagem, COALESCE(SUM(a.quantidade), 0) AS visitantes " +
             "FROM Agendar a JOIN a.atividade at " +
             "WHERE at.data BETWEEN :dataInicio AND :dataFim " +
-            "AND a.presenca = true AND at.ativo = true " +
+            "AND a.presenca = true AND at.ativo = true AND a.agendamento = true " +
             "GROUP BY at.idAtividade, at.nome, at.imagem " +
             "ORDER BY at.data ASC")
     List<EventoRelatorioProjection> findEventosRealizadosPeriodo(@Param("dataInicio") LocalDate dataInicio, @Param("dataFim") LocalDate dataFim);

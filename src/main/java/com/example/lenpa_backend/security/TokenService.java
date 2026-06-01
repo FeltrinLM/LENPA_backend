@@ -8,10 +8,6 @@ import com.example.lenpa_backend.model.Funcionario;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-
 @Service
 public class TokenService {
 
@@ -24,11 +20,8 @@ public class TokenService {
             return JWT.create()
                     .withIssuer("API LENPA")
                     .withSubject(funcionario.getEmail())
-                    // --- ADICIONAMOS ESSAS LINHAS AQUI ---
                     .withClaim("nome", funcionario.getNome())
                     .withClaim("role", funcionario.getNivelPermissao().toString())
-                    // -------------------------------------
-                    .withExpiresAt(dataExpiracao())
                     .sign(algoritmo);
         } catch (JWTCreationException exception) {
             throw new RuntimeException("Erro ao gerar token jwt", exception);
@@ -44,11 +37,8 @@ public class TokenService {
                     .verify(tokenJWT)
                     .getSubject();
         } catch (JWTVerificationException exception) {
-            throw new RuntimeException("Token JWT inválido ou expirado!");
+            // Ajustei a mensagem de erro já que agora ele não expira mais
+            throw new RuntimeException("Token JWT inválido!");
         }
-    }
-
-    private Instant dataExpiracao() {
-        return LocalDateTime.now().plusHours(12).toInstant(ZoneOffset.of("-03:00"));
     }
 }

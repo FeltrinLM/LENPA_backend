@@ -8,6 +8,10 @@ public record DadosDetalhamentoAgendamento(
         String nomeAtividade,
         Long idVisitante,
         String nomeVisitante,
+
+        // A MÁGICA AQUI: O campo que o Angular estava implorando para receber!
+        String cidadeVisitante,
+
         Integer quantidade,
         Boolean presenca,
         Boolean agendamento
@@ -19,6 +23,10 @@ public record DadosDetalhamentoAgendamento(
                 agendar.getAtividade().getNome(),
                 agendar.getVisitante().getId(),
                 agendar.getVisitante().getNome(),
+
+                // Puxa a cidade direto da Entidade Visitante que está dentro do Agendar
+                agendar.getVisitante().getCidade(),
+
                 agendar.getQuantidade(),
                 agendar.getPresenca(),
                 agendar.getAgendamento()

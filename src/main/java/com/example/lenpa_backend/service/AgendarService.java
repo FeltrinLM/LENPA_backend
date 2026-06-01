@@ -40,17 +40,23 @@ public class AgendarService {
         var atividade = atividadeRepository.findById(dados.idAtividade())
                 .orElseThrow(() -> new RuntimeException("Atividade não encontrada!"));
 
-        // 2. CONCILIAÇÃO DE IDENTIDADE (A Mágica da Márcia/Renato)
+        // 2. CONCILIAÇÃO DE IDENTIDADE
         Visitante visitante = null;
 
         // Estratégia A: Busca pelo E-mail (Se foi informado)
         if (dados.emailVisitante() != null && !dados.emailVisitante().isBlank()) {
-            visitante = visitanteRepository.findByEmail(dados.emailVisitante()).orElse(null);
+            visitante = visitanteRepository.findFirstByEmail(dados.emailVisitante()).orElse(null);
+
+            // CORREÇÃO DA CIDADE: Se achou o usuário e ele tem uma cidade nova, atualiza no banco!
+            if (visitante != null && dados.cidadeVisitante() != null && !dados.cidadeVisitante().isBlank()) {
+                visitante.setCidade(dados.cidadeVisitante());
+                visitanteRepository.save(visitante);
+            }
         }
 
         // Estratégia B: Se não achou pelo e-mail, busca por Nome + Cidade
         if (visitante == null) {
-            visitante = visitanteRepository.findByNomeAndCidade(dados.nomeVisitante(), dados.cidadeVisitante()).orElse(null);
+            visitante = visitanteRepository.findFirstByNomeAndCidade(dados.nomeVisitante(), dados.cidadeVisitante()).orElse(null);
 
             // O "Link": Achou a pessoa, ela não tinha e-mail, mas agora digitou um? Vamos atualizar o perfil dela!
             if (visitante != null && visitante.getEmail() == null && dados.emailVisitante() != null) {
@@ -66,8 +72,8 @@ public class AgendarService {
             visitanteRepository.save(visitante);
         }
 
-        // 3. VALIDAÇÃO: Duplicidade
-        if (repository.existsByAtividadeIdAtividadeAndVisitanteId(atividade.getIdAtividade(), visitante.getId())) {
+        // 3. VALIDAÇÃO: Duplicidade (Atualizado para olhar apenas agendamentos ativos)
+        if (repository.existsByAtividadeIdAtividadeAndVisitanteIdAndAgendamentoTrue(atividade.getIdAtividade(), visitante.getId())) {
             throw new RuntimeException("O visitante " + visitante.getNome() + " já está agendado nesta atividade!");
         }
 
@@ -81,7 +87,6 @@ public class AgendarService {
 
         // 5. Cria e Salva o Agendamento (Reserva confirmada!)
         var agendamento = mapper.toEntity(dados.quantidade(), atividade, visitante);
-        // O Agendar padrão já deve nascer com agendamento = true. O mapper já deve cuidar disso, mas fica o reforço lógico.
         agendamento.setAgendamento(true);
         repository.save(agendamento);
 
@@ -102,17 +107,22 @@ public class AgendarService {
 
     @Transactional
     public void confirmarPresenca(Long id) {
-        var agendamento = repository.getReferenceById(id);
+        // 🔥 Usando findById no lugar da casca (getReferenceById)
+        var agendamento = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado"));
         agendamento.setPresenca(true);
     }
 
     @Transactional
     public void cancelar(Long id) {
-        var agendamento = repository.getReferenceById(id);
+        // 🔥 Usando findById no lugar da casca (getReferenceById)
+        var agendamento = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado"));
         agendamento.setAgendamento(false);
     }
 
     public Page<DadosDetalhamentoAgendamento> listar(Pageable paginacao) {
-        return repository.findAll(paginacao).map(mapper::toDetalhamentoDTO);
+        // 🔥 Trocado findAll() por findByAgendamentoTrue()
+        return repository.findByAgendamentoTrue(paginacao).map(mapper::toDetalhamentoDTO);
     }
 }
