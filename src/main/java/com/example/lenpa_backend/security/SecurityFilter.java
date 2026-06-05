@@ -28,35 +28,41 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         if (tokenJWT != null) {
             try {
-                // Tenta validar o token e autenticar o usuário
                 var subject = tokenService.getSubject(tokenJWT);
-                var usuario = repository.findByEmail(subject).orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+                // Defesa: E se o token for válido, mas o usuário foi deletado do banco ontem?
+                var usuario = repository.findByEmail(subject)
+                        .orElseThrow(() -> new RuntimeException("O usuário do token não existe mais no banco de dados."));
 
                 var authentication = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            } catch (RuntimeException e) {
-                // 🔥 O PULO DO GATO 🔥
-                // Se o token estiver vencido ou inválido, o erro cai aqui.
-                // Não deixamos o servidor dar Erro 500. Apenas logamos e o usuário segue "não autenticado".
-                System.err.println("Aviso no SecurityFilter: Token rejeitado (" + e.getMessage() + "). Seguindo como visitante anônimo.");
+            } catch (Exception e) {
+                // 🔥 DEFESA MÁXIMA: Capturamos Exception genérica.
+                // Se a leitura falhar por QUALQUER motivo, o servidor não crasha e limpa o contexto.
+                System.err.println("🛡️ SecurityFilter interceptou um token problemático e bloqueou o acesso. Motivo: " + e.getMessage());
+                SecurityContextHolder.clearContext();
             }
         }
 
-        // Segue o baile!
-        // - Se a rota é pública (/agendamentos), funciona.
-        // - Se a rota é protegida e o token caiu no catch ali em cima, o Spring devolve um 403 Forbidden limpo.
         filterChain.doFilter(request, response);
     }
 
     private String recuperarToken(HttpServletRequest request) {
         var authorizationHeader = request.getHeader("Authorization");
 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+        // Defesa 1: Verifica se existe e tem o tamanho mínimo viável
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ") || authorizationHeader.length() <= 7) {
             return null;
         }
 
-        // Retorna apenas a parte do código do token (pula os 7 caracteres de "Bearer ")
-        return authorizationHeader.substring(7);
+        String token = authorizationHeader.substring(7).trim();
+
+        // 🔥 Defesa 2 (O matador de bugs): Bloqueia strings literais de erro do Frontend
+        if (token.isEmpty() || token.equals("null") || token.equals("undefined")) {
+            return null;
+        }
+
+        return token;
     }
 }

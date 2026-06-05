@@ -37,8 +37,8 @@ public class TokenService {
                     .verify(tokenJWT)
                     .getSubject();
         } catch (JWTVerificationException exception) {
-            // Ajustei a mensagem de erro já que agora ele não expira mais
-            throw new RuntimeException("Token JWT inválido!");
+            // 🔥 Agora ele devolve o motivo exato (ex: Assinatura inválida, expirado, malformado)
+            throw new RuntimeException("Token corrompido ou chave secreta incorreta: " + exception.getMessage());
         }
     }
 }

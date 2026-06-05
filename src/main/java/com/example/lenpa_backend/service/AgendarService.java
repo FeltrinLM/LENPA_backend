@@ -74,7 +74,15 @@ public class AgendarService {
 
         // 3. VALIDAÇÃO: Duplicidade (Atualizado para olhar apenas agendamentos ativos)
         if (repository.existsByAtividadeIdAtividadeAndVisitanteIdAndAgendamentoTrue(atividade.getIdAtividade(), visitante.getId())) {
-            throw new RuntimeException("O visitante " + visitante.getNome() + " já está agendado nesta atividade!");
+            String motivo = "O visitante já possui um agendamento ativo nesta atividade.";
+
+            // 🔥 Dispara o alerta por e-mail antes de travar a requisição
+            emailService.notificarFalhaAgendamento(
+                    atividade.getNome(), dados.nomeVisitante(), dados.quantidade(),
+                    dados.emailVisitante(), dados.cidadeVisitante(), motivo
+            );
+
+            throw new RuntimeException(motivo);
         }
 
         // 4. VALIDAÇÃO: Lotação (Tem vaga?)
@@ -82,7 +90,15 @@ public class AgendarService {
         if (ocupadas == null) ocupadas = 0;
 
         if ((ocupadas + dados.quantidade()) > atividade.getVagas()) {
-            throw new RuntimeException("Capacidade máxima excedida! Vagas restantes: " + (atividade.getVagas() - ocupadas));
+            String motivo = "Capacidade máxima excedida! Vagas restantes: " + (atividade.getVagas() - ocupadas);
+
+            // 🔥 Dispara o alerta por e-mail antes de travar a requisição
+            emailService.notificarFalhaAgendamento(
+                    atividade.getNome(), dados.nomeVisitante(), dados.quantidade(),
+                    dados.emailVisitante(), dados.cidadeVisitante(), motivo
+            );
+
+            throw new RuntimeException(motivo);
         }
 
         // 5. Cria e Salva o Agendamento (Reserva confirmada!)
