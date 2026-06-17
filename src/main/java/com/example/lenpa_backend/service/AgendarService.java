@@ -119,10 +119,18 @@ public class AgendarService {
         agendamento.setAgendamento(true);
         repository.save(agendamento);
 
-        // 6. DISPARO DO E-MAIL DE CONFIRMAÇÃO
+        // 6. DISPARO DO E-MAIL DE CONFIRMACAO
         try {
+            // Tratamento de nulos caso a atividade não tenha essas informações preenchidas
+            String dataFormatada = atividade.getData() != null ? atividade.getData().toString() : "A definir";
+            String horarioFormatado = atividade.getHorario() != null ? atividade.getHorario() : "A definir";
+            String localFormatado = atividade.getLocal() != null ? atividade.getLocal() : "A definir";
+
             emailService.notificarNovoAgendamento(
                     atividade.getNome(),
+                    dataFormatada,
+                    horarioFormatado,
+                    localFormatado,
                     visitante.getNome(),
                     dados.quantidade(),
                     visitante.getEmail()
