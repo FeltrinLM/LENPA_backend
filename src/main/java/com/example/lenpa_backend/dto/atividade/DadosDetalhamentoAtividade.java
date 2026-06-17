@@ -7,22 +7,25 @@ import java.time.LocalDate;
 public record DadosDetalhamentoAtividade(
         Long idAtividade,
         String nome,
-        Integer vagas,
+        Integer vagas,            // Vagas totais (capacidade)
+        Integer vagasDisponiveis, // <-- NOVO CAMPO QUE O ANGULAR VAI LER
         LocalDate data,
         String horario,
-        String local, // NOVO CAMPO
+        String local,
         String descricao,
         String imagem,
         TipoAtividade tipo
 ) {
-    public DadosDetalhamentoAtividade(Atividade atividade) {
+    // Ajuste no construtor para receber o valor calculado externamente
+    public DadosDetalhamentoAtividade(Atividade atividade, Integer vagasDisponiveis) {
         this(
                 atividade.getIdAtividade(),
                 atividade.getNome(),
                 atividade.getVagas(),
+                vagasDisponiveis, // <-- MAPEAMENTO DO VALOR CALCULADO
                 atividade.getData(),
                 atividade.getHorario(),
-                atividade.getLocal(), // MAPEAMENTO DO NOVO CAMPO
+                atividade.getLocal(),
                 atividade.getDescricao(),
                 atividade.getImagem(),
                 atividade.getTipo()

@@ -11,9 +11,12 @@ import com.example.lenpa_backend.repository.AtividadeRepository;
 import com.example.lenpa_backend.repository.VisitanteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AgendarService {
@@ -36,9 +39,8 @@ public class AgendarService {
     @Transactional
     public DadosDetalhamentoAgendamento agendar(DadosCadastroAgendamento dados) {
 
-        // 1. Busca a Atividade
         var atividade = atividadeRepository.findById(dados.idAtividade())
-                .orElseThrow(() -> new RuntimeException("Atividade não encontrada!"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Atividade não encontrada!"));
 
         // 2. CONCILIAÇÃO DE IDENTIDADE
         Visitante visitante = null;
@@ -47,10 +49,23 @@ public class AgendarService {
         if (dados.emailVisitante() != null && !dados.emailVisitante().isBlank()) {
             visitante = visitanteRepository.findFirstByEmail(dados.emailVisitante()).orElse(null);
 
-            // CORREÇÃO DA CIDADE: Se achou o usuário e ele tem uma cidade nova, atualiza no banco!
-            if (visitante != null && dados.cidadeVisitante() != null && !dados.cidadeVisitante().isBlank()) {
-                visitante.setCidade(dados.cidadeVisitante());
-                visitanteRepository.save(visitante);
+            // 🔥 Atualiza os dados do visitante para o agendamento atual (ex: Virou Escola)
+            if (visitante != null) {
+                boolean precisaAtualizar = false;
+
+                if (dados.cidadeVisitante() != null && !dados.cidadeVisitante().isBlank() && !dados.cidadeVisitante().equals(visitante.getCidade())) {
+                    visitante.setCidade(dados.cidadeVisitante());
+                    precisaAtualizar = true;
+                }
+
+                if (dados.nomeVisitante() != null && !dados.nomeVisitante().isBlank() && !dados.nomeVisitante().equals(visitante.getNome())) {
+                    visitante.setNome(dados.nomeVisitante());
+                    precisaAtualizar = true;
+                }
+
+                if (precisaAtualizar) {
+                    visitanteRepository.save(visitante);
+                }
             }
         }
 
@@ -72,17 +87,16 @@ public class AgendarService {
             visitanteRepository.save(visitante);
         }
 
-        // 3. VALIDAÇÃO: Duplicidade (Atualizado para olhar apenas agendamentos ativos)
+        // 3. VALIDAÇÃO: Duplicidade
         if (repository.existsByAtividadeIdAtividadeAndVisitanteIdAndAgendamentoTrue(atividade.getIdAtividade(), visitante.getId())) {
             String motivo = "O visitante já possui um agendamento ativo nesta atividade.";
 
-            // 🔥 Dispara o alerta por e-mail antes de travar a requisição
             emailService.notificarFalhaAgendamento(
                     atividade.getNome(), dados.nomeVisitante(), dados.quantidade(),
                     dados.emailVisitante(), dados.cidadeVisitante(), motivo
             );
 
-            throw new RuntimeException(motivo);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, motivo);
         }
 
         // 4. VALIDAÇÃO: Lotação (Tem vaga?)
@@ -92,16 +106,15 @@ public class AgendarService {
         if ((ocupadas + dados.quantidade()) > atividade.getVagas()) {
             String motivo = "Capacidade máxima excedida! Vagas restantes: " + (atividade.getVagas() - ocupadas);
 
-            // 🔥 Dispara o alerta por e-mail antes de travar a requisição
             emailService.notificarFalhaAgendamento(
                     atividade.getNome(), dados.nomeVisitante(), dados.quantidade(),
                     dados.emailVisitante(), dados.cidadeVisitante(), motivo
             );
 
-            throw new RuntimeException(motivo);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, motivo);
         }
 
-        // 5. Cria e Salva o Agendamento (Reserva confirmada!)
+        // 5. Cria e Salva o Agendamento
         var agendamento = mapper.toEntity(dados.quantidade(), atividade, visitante);
         agendamento.setAgendamento(true);
         repository.save(agendamento);
@@ -123,22 +136,22 @@ public class AgendarService {
 
     @Transactional
     public void confirmarPresenca(Long id) {
-        // 🔥 Usando findById no lugar da casca (getReferenceById)
         var agendamento = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agendamento não encontrado"));
         agendamento.setPresenca(true);
     }
 
     @Transactional
     public void cancelar(Long id) {
-        // 🔥 Usando findById no lugar da casca (getReferenceById)
         var agendamento = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agendamento não encontrado"));
         agendamento.setAgendamento(false);
     }
 
+    // 🔥 CORREÇÃO DA PAGINAÇÃO AQUI
     public Page<DadosDetalhamentoAgendamento> listar(Pageable paginacao) {
-        // 🔥 Trocado findAll() por findByAgendamentoTrue()
-        return repository.findByAgendamentoTrue(paginacao).map(mapper::toDetalhamentoDTO);
+        // Ignora a limitação de 20 itens que vem do Controller e força uma página gigante
+        Pageable paginaIlimitada = PageRequest.of(0, 10000);
+        return repository.findByAgendamentoTrue(paginaIlimitada).map(mapper::toDetalhamentoDTO);
     }
 }

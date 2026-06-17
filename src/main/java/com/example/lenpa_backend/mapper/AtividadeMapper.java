@@ -12,14 +12,16 @@ public class AtividadeMapper {
         return new Atividade(dados);
     }
 
-    public DadosDetalhamentoAtividade toDetalhamentoDTO(Atividade atividade) {
+    // Passamos a receber o cálculo de 'vagasDisponiveis' como parâmetro
+    public DadosDetalhamentoAtividade toDetalhamentoDTO(Atividade atividade, Integer vagasDisponiveis) {
         return new DadosDetalhamentoAtividade(
                 atividade.getIdAtividade(),
                 atividade.getNome(),
                 atividade.getVagas(),
+                vagasDisponiveis, // INSERIDO O NOVO CAMPO AQUI
                 atividade.getData(),
                 atividade.getHorario(),
-                atividade.getLocal(), // MAPEAMENTO DO NOVO CAMPO
+                atividade.getLocal(),
                 atividade.getDescricao(),
                 atividade.getImagem(),
                 atividade.getTipo()

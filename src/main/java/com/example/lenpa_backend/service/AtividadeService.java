@@ -5,6 +5,7 @@ import com.example.lenpa_backend.dto.atividade.DadosCadastroAtividade;
 import com.example.lenpa_backend.dto.atividade.DadosDetalhamentoAtividade;
 import com.example.lenpa_backend.mapper.AtividadeMapper;
 import com.example.lenpa_backend.model.Atividade;
+import com.example.lenpa_backend.repository.AgendarRepository;
 import com.example.lenpa_backend.repository.AtividadeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,10 @@ public class AtividadeService {
     @Autowired
     private AtividadeRepository repository;
 
+    // Injetando o repositório de agendamentos para usar a query de soma
+    @Autowired
+    private AgendarRepository agendarRepository;
+
     @Autowired
     private AtividadeMapper mapper;
 
@@ -31,17 +36,24 @@ public class AtividadeService {
     public DadosDetalhamentoAtividade cadastrar(DadosCadastroAtividade dados) {
         var atividade = mapper.toEntity(dados);
         repository.save(atividade);
-        return mapper.toDetalhamentoDTO(atividade);
+
+        // Na hora que cadastra, ninguém agendou ainda, então vagasDisponiveis = vagas totais
+        return mapper.toDetalhamentoDTO(atividade, atividade.getVagas());
     }
 
     public Page<DadosDetalhamentoAtividade> listar(Pageable paginacao) {
-        return repository.findAllByAtivoTrue(paginacao).map(mapper::toDetalhamentoDTO);
+        return repository.findAllByAtivoTrue(paginacao).map(atividade -> {
+            Integer vagasDisponiveis = calcularVagasDisponiveis(atividade);
+            return mapper.toDetalhamentoDTO(atividade, vagasDisponiveis);
+        });
     }
 
     public DadosDetalhamentoAtividade buscarPorId(Long id) {
         var atividade = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Atividade não encontrada!"));
-        return mapper.toDetalhamentoDTO(atividade);
+
+        Integer vagasDisponiveis = calcularVagasDisponiveis(atividade);
+        return mapper.toDetalhamentoDTO(atividade, vagasDisponiveis);
     }
 
     @Transactional
@@ -58,12 +70,13 @@ public class AtividadeService {
         if (dados.vagas() != null) atividade.setVagas(dados.vagas());
         if (dados.data() != null) atividade.setData(dados.data());
         if (dados.horario() != null) atividade.setHorario(dados.horario());
-        if (dados.local() != null) atividade.setLocal(dados.local()); // ATUALIZAÇÃO DO NOVO CAMPO
+        if (dados.local() != null) atividade.setLocal(dados.local());
         if (dados.descricao() != null) atividade.setDescricao(dados.descricao());
         if (dados.imagem() != null) atividade.setImagem(dados.imagem());
         if (dados.tipo() != null) atividade.setTipo(dados.tipo());
 
-        return mapper.toDetalhamentoDTO(atividade);
+        Integer vagasDisponiveis = calcularVagasDisponiveis(atividade);
+        return mapper.toDetalhamentoDTO(atividade, vagasDisponiveis);
     }
 
     public String salvarImagem(MultipartFile arquivo) {
@@ -84,5 +97,15 @@ public class AtividadeService {
         } catch (Exception e) {
             throw new RuntimeException("Erro ao salvar a imagem", e);
         }
+    }
+
+    // =========================================================================
+    // MÉTODO AUXILIAR: Isola a regra de negócio para calcular a subtração
+    // =========================================================================
+    private Integer calcularVagasDisponiveis(Atividade atividade) {
+        Integer ocupadas = agendarRepository.somarQuantidadeReservada(atividade.getIdAtividade());
+        // Garante que não retorne número negativo caso ocorra algum erro no banco
+        int disponiveis = atividade.getVagas() - ocupadas;
+        return Math.max(disponiveis, 0);
     }
 }
