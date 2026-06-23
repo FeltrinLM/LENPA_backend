@@ -24,7 +24,8 @@ public class AtividadeMapper {
                 atividade.getLocal(),
                 atividade.getDescricao(),
                 atividade.getImagem(),
-                atividade.getTipo()
+                atividade.getTipo(),
+                atividade.getAtivo()
         );
     }
 }

@@ -25,19 +25,20 @@ public class AtividadeService {
     @Autowired
     private AtividadeRepository repository;
 
-    // Injetando o repositório de agendamentos para usar a query de soma
     @Autowired
     private AgendarRepository agendarRepository;
 
     @Autowired
     private AtividadeMapper mapper;
 
+    @Autowired
+    private EmailService emailService;
+
     @Transactional
     public DadosDetalhamentoAtividade cadastrar(DadosCadastroAtividade dados) {
         var atividade = mapper.toEntity(dados);
         repository.save(atividade);
 
-        // Na hora que cadastra, ninguém agendou ainda, então vagasDisponiveis = vagas totais
         return mapper.toDetalhamentoDTO(atividade, atividade.getVagas());
     }
 
@@ -49,8 +50,9 @@ public class AtividadeService {
     }
 
     public DadosDetalhamentoAtividade buscarPorId(Long id) {
-        var atividade = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Atividade não encontrada!"));
+        // 🔥 SUBSTITUIÇÃO AQUI: Usa o método customizado para bloquear acesso a atividades ocultas
+        var atividade = repository.findByIdAtividadeAndAtivoTrue(id)
+                .orElseThrow(() -> new RuntimeException("Atividade não encontrada ou inativa!"));
 
         Integer vagasDisponiveis = calcularVagasDisponiveis(atividade);
         return mapper.toDetalhamentoDTO(atividade, vagasDisponiveis);
@@ -66,6 +68,9 @@ public class AtividadeService {
     public DadosDetalhamentoAtividade atualizar(DadosAtualizacaoAtividade dados) {
         var atividade = repository.getReferenceById(dados.idAtividade());
 
+        var dataAntiga = atividade.getData();
+        var horarioAntigo = atividade.getHorario();
+
         if (dados.nome() != null) atividade.setNome(dados.nome());
         if (dados.vagas() != null) atividade.setVagas(dados.vagas());
         if (dados.data() != null) atividade.setData(dados.data());
@@ -74,6 +79,34 @@ public class AtividadeService {
         if (dados.descricao() != null) atividade.setDescricao(dados.descricao());
         if (dados.imagem() != null) atividade.setImagem(dados.imagem());
         if (dados.tipo() != null) atividade.setTipo(dados.tipo());
+
+        boolean mudouData = dados.data() != null && !dados.data().equals(dataAntiga);
+        boolean mudouHorario = dados.horario() != null && !dados.horario().equals(horarioAntigo);
+
+        if (mudouData || mudouHorario) {
+            var agendamentosAtivos = agendarRepository.findAllByAtividadeIdAtividadeAndAgendamentoTrue(atividade.getIdAtividade());
+
+            String novaData = atividade.getData() != null ? atividade.getData().toString() : "A definir";
+            String novoHorario = atividade.getHorario() != null ? atividade.getHorario() : "A definir";
+            String novoLocal = atividade.getLocal() != null ? atividade.getLocal() : "A definir";
+
+            for (var agendamento : agendamentosAtivos) {
+                if (agendamento.getVisitante() != null && agendamento.getVisitante().getEmail() != null && !agendamento.getVisitante().getEmail().isBlank()) {
+                    try {
+                        emailService.notificarMudancaAtividade(
+                                atividade.getNome(),
+                                novaData,
+                                novoHorario,
+                                novoLocal,
+                                agendamento.getVisitante().getNome(),
+                                agendamento.getVisitante().getEmail()
+                        );
+                    } catch (Exception e) {
+                        System.err.println("Aviso: Falha ao disparar e-mail de alteracao de cronograma para " + agendamento.getVisitante().getEmail() + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
 
         Integer vagasDisponiveis = calcularVagasDisponiveis(atividade);
         return mapper.toDetalhamentoDTO(atividade, vagasDisponiveis);
@@ -99,13 +132,21 @@ public class AtividadeService {
         }
     }
 
-    // =========================================================================
-    // MÉTODO AUXILIAR: Isola a regra de negócio para calcular a subtração
-    // =========================================================================
     private Integer calcularVagasDisponiveis(Atividade atividade) {
         Integer ocupadas = agendarRepository.somarQuantidadeReservada(atividade.getIdAtividade());
-        // Garante que não retorne número negativo caso ocorra algum erro no banco
         int disponiveis = atividade.getVagas() - ocupadas;
         return Math.max(disponiveis, 0);
+    }
+    public Page<DadosDetalhamentoAtividade> listarTodas(Pageable paginacao) {
+        return repository.findAll(paginacao).map(atividade -> {
+            Integer vagasDisponiveis = calcularVagasDisponiveis(atividade);
+            return mapper.toDetalhamentoDTO(atividade, vagasDisponiveis);
+        });
+    }
+
+    @Transactional
+    public void restaurar(Long id) {
+        var atividade = repository.findById(id).orElseThrow(() -> new RuntimeException("Atividade não encontrada"));
+        atividade.setAtivo(true);
     }
 }

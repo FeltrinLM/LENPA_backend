@@ -7,11 +7,15 @@ import com.example.lenpa_backend.dto.funcionario.TrocarSenhaDTO;
 import com.example.lenpa_backend.mapper.FuncionarioMapper;
 import com.example.lenpa_backend.model.Funcionario;
 import com.example.lenpa_backend.repository.FuncionarioRepository;
+import com.example.lenpa_backend.security.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map; // <-- Importante para o novo retorno
 
 @Service
 public class FuncionarioService {
@@ -25,10 +29,12 @@ public class FuncionarioService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // CRIAR
+    @Autowired
+    private TokenService tokenService; // <-- Injetando o gerador de token
+
     public FuncionarioResponseDTO cadastrarFuncionario(FuncionarioRequestDTO dto) {
         if (repository.findByEmail(dto.email()).isPresent()) {
-            throw new RuntimeException("Já existe um funcionário cadastrado com este e-mail.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um funcionário cadastrado com este e-mail.");
         }
 
         Funcionario novoFuncionario = mapper.toEntity(dto);
@@ -38,23 +44,18 @@ public class FuncionarioService {
         return mapper.toResponseDTO(funcionarioSalvo);
     }
 
-    // ATUALIZAR
     public FuncionarioResponseDTO atualizarFuncionario(Long id, FuncionarioRequestDTO dto) {
-        // Busca o cara no banco primeiro
         Funcionario funcionarioExistente = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Funcionário não encontrado."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Funcionário não encontrado."));
 
-        // Regra: Se ele estiver tentando mudar o email para um que já existe em outra conta, bloqueia
         if (!funcionarioExistente.getEmail().equals(dto.email()) && repository.findByEmail(dto.email()).isPresent()) {
-            throw new RuntimeException("Este e-mail já está em uso por outro funcionário.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Este e-mail já está em uso por outro funcionário.");
         }
 
-        // Atualiza os dados manuais
         funcionarioExistente.setNome(dto.nome());
         funcionarioExistente.setEmail(dto.email());
         funcionarioExistente.setNivelPermissao(dto.nivelPermissao());
 
-        // Só atualiza a senha se ele mandou uma nova
         if (dto.senha() != null && !dto.senha().isBlank()) {
             funcionarioExistente.setSenha(passwordEncoder.encode(dto.senha()));
         }
@@ -63,47 +64,54 @@ public class FuncionarioService {
         return mapper.toResponseDTO(funcionarioAtualizado);
     }
 
-    // EXCLUIR
     public void excluirFuncionario(Long id) {
         if (!repository.existsById(id)) {
-            throw new RuntimeException("Funcionário não encontrado.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Funcionário não encontrado.");
         }
         repository.deleteById(id);
     }
-    // No FuncionarioService.java
 
-    public FuncionarioResponseDTO atualizarPerfil(String emailLogado, AtualizarPerfilDTO dto) {
+    // 🔥 O MÉTODO MODIFICADO AQUI 🔥
+    public Map<String, Object> atualizarPerfil(String emailLogado, AtualizarPerfilDTO dto) {
         Funcionario funcionario = repository.findByEmail(emailLogado)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
-        // Valida se o novo email já existe em OUTRA conta
         if (!funcionario.getEmail().equals(dto.email()) && repository.findByEmail(dto.email()).isPresent()) {
-            throw new RuntimeException("Este e-mail já está em uso.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Este e-mail já está em uso.");
         }
 
         funcionario.setNome(dto.nome());
         funcionario.setEmail(dto.email());
 
-        return mapper.toResponseDTO(repository.save(funcionario));
+        Funcionario atualizado = repository.save(funcionario);
+
+        // A MÁGICA: Gera um token novinho em folha com os dados recém-salvos
+        String novoToken = tokenService.gerarToken(atualizado);
+        FuncionarioResponseDTO dtoResposta = mapper.toResponseDTO(atualizado);
+
+        // Devolvemos tanto os dados quanto o token em um Map
+        return Map.of(
+                "usuario", dtoResposta,
+                "token", novoToken
+        );
     }
 
     public void alterarSenha(String emailLogado, TrocarSenhaDTO dto) {
         Funcionario funcionario = repository.findByEmail(emailLogado)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
-        // O matches do PasswordEncoder é essencial aqui!
         if (!passwordEncoder.matches(dto.senhaAtual(), funcionario.getSenha())) {
-            throw new RuntimeException("Senha atual incorreta.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Senha atual incorreta.");
         }
 
         funcionario.setSenha(passwordEncoder.encode(dto.novaSenha()));
         repository.save(funcionario);
     }
-    // LISTAR TODOS
+
     public List<FuncionarioResponseDTO> listarTodos() {
         return repository.findAll()
                 .stream()
                 .map(mapper::toResponseDTO)
-                .toList(); // Se estiver usando Java 16+, toList() funciona direto. Senão, use Collectors.toList()
+                .toList();
     }
 }

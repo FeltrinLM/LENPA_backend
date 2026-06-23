@@ -6,10 +6,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
 
     // Busca apenas as atividades que o Admin não "deletou" (ativo = true)
-    // Usamos Page para garantir que o front-end receba os dados paginados
     Page<Atividade> findAllByAtivoTrue(Pageable paginacao);
+
+    // 🔥 NOVO: Busca por ID, mas SÓ se a atividade estiver ativa
+    Optional<Atividade> findByIdAtividadeAndAtivoTrue(Long idAtividade);
 }

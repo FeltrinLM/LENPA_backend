@@ -24,7 +24,7 @@ public class FuncionarioController {
     // --- ROTAS DE AUTOGESTÃO (VEM PRIMEIRO) ---
 
     @PutMapping("/meu-perfil")
-    public ResponseEntity<FuncionarioResponseDTO> atualizarPerfil(@RequestBody @Valid AtualizarPerfilDTO dto) {
+    public ResponseEntity<java.util.Map<String, Object>> atualizarPerfil(@RequestBody @Valid AtualizarPerfilDTO dto) {
         var emailLogado = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
         var response = service.atualizarPerfil(emailLogado, dto);
         return ResponseEntity.ok(response);
@@ -39,28 +39,28 @@ public class FuncionarioController {
 
     // --- ROTAS ADMINISTRATIVAS (VEM DEPOIS) ---
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMINISTRADOR')") // Lembre-se de usar a String exata do seu Enum que arrumamos antes
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     public ResponseEntity<List<FuncionarioResponseDTO>> listar() {
         List<FuncionarioResponseDTO> lista = service.listarTodos();
         return ResponseEntity.ok(lista);
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMINISTRADOR')") // <-- ARRUMADO AQUI
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     public ResponseEntity<FuncionarioResponseDTO> cadastrar(@RequestBody @Valid FuncionarioRequestDTO dto) {
         FuncionarioResponseDTO response = service.cadastrarFuncionario(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMINISTRADOR')") // <-- ARRUMADO AQUI
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     public ResponseEntity<FuncionarioResponseDTO> atualizar(@PathVariable Long id, @RequestBody @Valid FuncionarioRequestDTO dto) {
         FuncionarioResponseDTO response = service.atualizarFuncionario(id, dto);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMINISTRADOR')") // <-- ARRUMADO AQUI
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
         service.excluirFuncionario(id);
         return ResponseEntity.noContent().build();

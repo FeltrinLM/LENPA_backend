@@ -47,6 +47,14 @@ public class AtividadeController {
         return ResponseEntity.ok(pagina);
     }
 
+    // 🔥 NOVO: Endpoint para o painel de configuração carregar todas as atividades (inclusive as ocultas)
+    @GetMapping("/todas")
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    public ResponseEntity<Page<DadosDetalhamentoAtividade>> listarTodas(@PageableDefault(size = 20, sort = {"data"}) Pageable paginacao) {
+        var pagina = service.listarTodas(paginacao);
+        return ResponseEntity.ok(pagina);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity detalhar(@PathVariable Long id) {
         var dto = service.buscarPorId(id);
@@ -57,6 +65,14 @@ public class AtividadeController {
     @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     public ResponseEntity excluir(@PathVariable Long id) {
         service.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 🔥 NOVO: Endpoint para restaurar a atividade oculta
+    @PutMapping("/{id}/restaurar")
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    public ResponseEntity restaurar(@PathVariable Long id) {
+        service.restaurar(id);
         return ResponseEntity.noContent().build();
     }
 

@@ -14,7 +14,8 @@ public record DadosDetalhamentoAtividade(
         String local,
         String descricao,
         String imagem,
-        TipoAtividade tipo
+        TipoAtividade tipo,
+        Boolean ativo
 ) {
     // Ajuste no construtor para receber o valor calculado externamente
     public DadosDetalhamentoAtividade(Atividade atividade, Integer vagasDisponiveis) {
@@ -28,7 +29,8 @@ public record DadosDetalhamentoAtividade(
                 atividade.getLocal(),
                 atividade.getDescricao(),
                 atividade.getImagem(),
-                atividade.getTipo()
+                atividade.getTipo(),
+                atividade.getAtivo()
         );
     }
 }
